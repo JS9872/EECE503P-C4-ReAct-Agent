@@ -12,6 +12,8 @@ Harborlight Learning Studio is the fictional tutoring business from C3. The agen
 
 The `PERSONAS` block defines two distinct prompt styles and Gemini reasoning settings. The friendly advisor uses low thinking and a 1024 token cap; the careful expert uses medium thinking and a 1536 token cap. `INSTRUCTIONS` is a separate, focused block defining input, output format, limits, and a worked example. The four variants compare few shot vs. zero shot, an added private decision check, and system prompt vs. in-message instructions. The private decision check asks the model to choose its next step but does not expose chain of thought.
 
+The default model is the free-tier `gemini-3.1-flash-lite`. The persona configurations vary its supported `thinking_level` and `max_output_tokens` settings.
+
 ## Run
 
 1. Install: `python -m pip install -r requirements.txt`

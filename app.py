@@ -1,5 +1,6 @@
 """Gradio demo for the C4 LangGraph ReAct agent."""
 import gradio as gr
+from google.genai.errors import ClientError
 from agent import PERSONAS, ask
 
 
@@ -9,6 +10,10 @@ def respond(question, persona, variant):
         return result["answer"], "\n".join(
             f"{item['phase']}: {item.get('name', item.get('decision'))} -> {item.get('observation', '')}"
             for item in result["trace"])
+    except ClientError as error:
+        if error.code == 429:
+            return "The free Gemini quota is temporarily full. Please wait about a minute and try again.", ""
+        return f"Gemini error: {error.message}", ""
     except Exception as error:
         return f"Error: {error}", ""
 

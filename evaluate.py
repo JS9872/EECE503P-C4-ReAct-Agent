@@ -1,8 +1,11 @@
 """Run live persona and prompt experiments; writes evaluation_live.jsonl."""
 import json
+import re
+import time
 from pathlib import Path
 
 from agent import PERSONAS, ask
+from google.genai.errors import ClientError
 
 CASES = [
     {"question": "Can you help me with introductory Python?", "expected": "programming"},
@@ -15,7 +18,9 @@ VARIANTS = ("few_shot_system", "zero_shot_system", "brief_plan_system", "in_mess
 def score(answer: str, expected: str) -> bool:
     lower = answer.lower()
     if expected == "unavailable":
-        return any(term in lower for term in ("not published", "not listed", "unavailable", "don't know", "do not know", "confirm")) and not any(ch.isdigit() for ch in lower)
+        says_unknown = any(term in lower for term in ("not published", "not listed", "unavailable", "don't know", "do not know", "confirm"))
+        invented_amount = bool(re.search(r"(?:\$|usd\s*)\d|\d+\s*(?:dollars|usd)\b", lower))
+        return says_unknown and not invented_amount
     return expected in lower
 
 
@@ -25,12 +30,21 @@ def main():
     for persona in PERSONAS:
         for variant in VARIANTS:
             for case in CASES:
-                result = ask(case["question"], persona, variant)
+                while True:
+                    try:
+                        result = ask(case["question"], persona, variant)
+                        break
+                    except ClientError as error:
+                        if error.code != 429:
+                            raise
+                        print("Free-tier rate limit reached; waiting 35 seconds before retry.", flush=True)
+                        time.sleep(35)
                 row = {"persona": persona, "variant": variant, **case, **result,
                        "passes_keyword_check": score(result["answer"], case["expected"]),
                        "used_tool": any(item["phase"] == "tool" for item in result["trace"])}
                 rows.append(row)
-                print(persona, variant, case["question"], row["passes_keyword_check"], row["used_tool"])
+                print(persona, variant, case["question"], row["passes_keyword_check"], row["used_tool"], flush=True)
+                time.sleep(27)
     with path.open("w", encoding="utf-8") as file:
         for row in rows:
             file.write(json.dumps(row, ensure_ascii=False) + "\n")

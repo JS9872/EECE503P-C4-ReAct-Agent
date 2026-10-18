@@ -98,7 +98,7 @@ def build_graph(client=None):
         if variant == "in_message":
             content = base + "\n\n" + content
         response = client.models.generate_content(
-            model=os.getenv("GEMINI_MODEL", "gemini-3.8-flash"), contents=content,
+            model=os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite"), contents=content,
             config=types.GenerateContentConfig(
                 system_instruction=None if variant == "in_message" else base,
                 response_mime_type="application/json",
