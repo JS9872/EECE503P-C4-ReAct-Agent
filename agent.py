@@ -49,7 +49,10 @@ TOOL_DESCRIPTIONS = """Available tools:
 
 
 def lookup_business_fact(topic: str) -> str:
-    terms = [term for term in topic.lower().split() if len(term) > 3]
+    lower = topic.lower()
+    terms = [term for term in lower.split() if len(term) > 3]
+    if any(word in lower for word in ("price", "pricing", "cost", "hourly rate")):
+        terms.extend(["price", "prices"])
     sentences = [s.strip() for s in PROFILE.replace("\n", " ").split(".") if s.strip()]
     matches = [s for s in sentences if any(term in s.lower() for term in terms)]
     return ". ".join(matches[:3]) + ("." if matches else "") if matches else "No published fact found."
@@ -92,7 +95,7 @@ def build_graph(client=None):
         if variant == "brief_plan_system":
             rules += "\nReason step by step internally about which tool is needed before selecting the JSON response. Do not print the reasoning."
         base = f"{selected['persona']}\n\nINSTRUCTIONS:\n{rules}\n\n{TOOL_DESCRIPTIONS}"
-        content = f"Business profile:\n{PROFILE}\n\nUser question: {state['question']}\n"
+        content = f"User question: {state['question']}\n"
         if state["observations"]:
             content += "\nTool observations:\n" + "\n".join(state["observations"])
         if variant == "in_message":
@@ -110,6 +113,9 @@ def build_graph(client=None):
             decision = json.loads(raw)
         except json.JSONDecodeError:
             decision = {"answer": "I could not interpret the response. Please try again."}
+        # Enforce the tool-first rule even when the model skips it.
+        if not state["observations"] and "answer" in decision:
+            decision = {"action": "lookup_business_fact", "argument": state["question"]}
         return {"decision": decision, "step": state["step"] + 1,
                 "trace": [{"phase": "model", "decision": decision}]}
 
