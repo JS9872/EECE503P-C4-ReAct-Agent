@@ -26,13 +26,15 @@ The copied `business_summary.txt` makes this folder independently runnable while
 
 ## Evaluation and reflection
 
-The experiment uses three cases: a programming fit, a study coaching fit, and an unknown price. `passes_keyword_check` is a quick automatic check; review each answer and trace manually for helpfulness, naturalness, factual support, and whether the tool was used. The live results file is generated only after an API key is supplied. No live comparison is claimed before running it.
+The live experiment used three cases: a programming fit, a study coaching fit, and an unpublished price. It ran 2 personas x 4 prompt variants x 3 cases on `gemini-3.1-flash-lite`. The final graph achieved **24/24** task-specific factual checks and **24/24** tool-use checks. The baseline graph achieved **23/24** tool-use checks: the careful expert once answered the price question without a tool. Adding a tool-first graph guard fixed that failure in the second run. Read [evaluation_results.md](evaluation_results.md) for the table, interpretation, answers, and traces; [evaluation_baseline_results.md](evaluation_baseline_results.md) records the earlier failure.
 
-The careful expert is expected to be more consistent for factual answers because it has more reasoning budget. The friendly advisor is expected to answer more quickly and naturally for discovery calls. These are hypotheses to check against live results, not measured findings. The tool trace should show a lookup before business claims. If the model repeatedly requests tools, the four-step cap prevents an endless loop. The separate instructions block should reduce invented prices and encourage a tool lookup; compare the variants to test whether it does. The main implementation challenge is turning free-form model output into a reliable action. JSON output, explicit action names, argument validation, and a bounded graph handle that risk.
+The friendly advisor sounded warmer and used 38.5 words per answer on average; the careful expert was more direct at 33.3. All eight persona/variant combinations handled the small test set correctly, so the experiment did not establish an accuracy winner. For factual advising I select the careful expert with few-shot system instructions: it was concise, followed the worked example, and used tools in all three final cases. The friendly advisor is a better fit for a discovery conversation. Few-shot and brief-plan responses averaged about 31 words, while zero-shot responses averaged 45.7 words. The separate instructions and tool-first guard made the evidence path visible and consistent. The largest challenges were reliable JSON action parsing and free-tier rate limits; JSON mode, a bounded graph, and paced testing addressed them. These results are limited to three questions, so the keyword check is not a general quality measure.
 
 ## Files
 
 - `agent.py`: persona settings, instructions, tools, and manual LangGraph loop
 - `app.py`: optional interactive demo
 - `evaluate.py`: repeatable live comparison
+- `evaluation_live.jsonl` and `evaluation_results.md`: final live results
+- `evaluation_baseline.jsonl` and `evaluation_baseline_results.md`: earlier run before the tool-first guard
 - `agent_personas.ipynb`: annotated notebook with setup, experiments, and reflection

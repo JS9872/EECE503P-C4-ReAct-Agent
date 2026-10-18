@@ -18,7 +18,7 @@ VARIANTS = ("few_shot_system", "zero_shot_system", "brief_plan_system", "in_mess
 def score(answer: str, expected: str) -> bool:
     lower = answer.lower()
     if expected == "unavailable":
-        says_unknown = any(term in lower for term in ("not published", "not listed", "does not publish", "unavailable", "don't know", "do not know", "confirm"))
+        says_unknown = any(term in lower for term in ("not published", "not listed", "does not publish", "do not publish", "don't publish", "no fixed", "not set", "cannot provide", "can't provide", "don't have", "do not have", "unavailable", "don't know", "do not know", "confirm"))
         invented_amount = bool(re.search(r"(?:\$|usd\s*)\d|\d+\s*(?:dollars|usd)\b", lower))
         return says_unknown and not invented_amount
     return expected in lower
